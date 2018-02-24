@@ -1,3 +1,7 @@
 .idea/
 out/
+res/testing/
+res/corpus/
+res/embedding/
+res/network/
 SemanticSimilarity.iml

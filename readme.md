@@ -4,14 +4,14 @@
    - zřejmě nejlepší dostupné multilinguální vektory
    - byl vytvořen kombinací dat z word2vec, GloVe, ConceptNet a OpenSubtitles 2016 za použití rozšířeného retrofittingu
    - dohromady 78 jazyků, 4,2GB
-   - extrakce pouze (cs, de, en, es, zh) -> 1,4GB
+   - extrakce pouze (cs, de, en, es, zh) -> 1,4GB; 644 167 slov
    - `io_utils.NumberbatchUtil.saveAsMultilingual("numberbatch", new MyEmbeddingUtil());`
    - řazeno abecedně, ne podle počtu výskytů
    
    
  - MUSE: Multilingual Unsupervised and Supervised Embeddings (https://github.com/facebookresearch/MUSE)
    - multilinguální vektory vytvořené monolinguálním mapováním (Fasttext)
-   - 200 000 z každého jazyka
+   - 200 000 slov z každého jazyka
    - chybí čínština, lze domapovat (viz monolinguální mapování dále)
    - celkem 2,5GB (bez zh)
 
@@ -42,9 +42,8 @@
 
 #### Slovníky
  - Bilinguální slovníky (https://github.com/facebookresearch/MUSE)
-   - cs-en, de-en, es-en
-   - čínština je klasická -> použít vlastní překlady
-   - 60 000 - 100 000 dvojic
+   - cs-en, de-en, es-en, zh-en
+   - 20 000 - 100 000 dvojic
    - dohromady 4MB
 
 
@@ -85,8 +84,9 @@
      - CCA z Matlabu
      - `techniques.monolingual_mapping.MultilingualCCA.multilingualCCA();`
      - Vstupem natrénované monolinguální vektory Fasttext
-     - Pracováno pouze s 30 000 nejčetnějšími slovy z každého jazyka
-     - Původně použity vlastní překlady (MS překladač), nyní (krom čínštiny) slovníky z MUSE (obsáhlejší)
+     - Pracováno s ~~30 000~~ 200 000 nejčetnějšími slovy z každého jazyka
+     - Původně použity vlastní překlady (MS překladač), nyní slovníky z MUSE (obsáhlejší)
+     - Celkem 3,1GB (1 000 000 slov)
 
 
  - MUSE: Multilingual Unsupervised and Supervised Embeddings (https://arxiv.org/pdf/1710.04087.pdf)
@@ -96,6 +96,13 @@
    - Krom čínštiny již předtrénováno (supervised) 200 000 slov z každého jazyka z fasttext (převod do en prostoru)
    - Čínština lze domapovat
    - TODO - domapovat
+   - Pozn.:
+     - Obtížné zprovoznění na cs Windows 
+       - v kódu explicitně zapsat dekódování souborů na UTF-8 
+       - nainstalovat Anaconda (numpy/scipy)
+       - nainstalovat (neoficiální Windows) PyTorch
+       - vypnout CUDA - mám ATi/AMD 
+       - knihovna Faiss jen pro Mac a Linux -> bez ní pomalé
 
 
 ---
@@ -122,23 +129,22 @@ cs:peníz | 0.93312080559326 | en:lamnoid | 0.9532720686140282 | de:burgmauer | 
 
 
  - Multilingual CCA
-   - Multilinguální prostor vytvořený z 30 000 nejčastějších slov z každého jazyka (tj. dohromady 150 000 slov) z předtrénovaných Fasttext embeddingů
-   - Přes vytvořené transformační vektory lze snadno transformovat celé prostory
+   - Multilinguální prostor vytvořený z ~~30 000~~ 200 000 nejčastějších slov z každého jazyka (tj. dohromady ~~150 000~~ 1 000 000 slov) z předtrénovaných Fasttext embeddingů
 
 cs:peníze |  | en:shark |  | cs:hrad |  |
 --- | --- | --- | --- | --- | ---
 Slovo | Podobnost | Slovo | Podobnost | Slovo | Podobnost
 --- | --- | --- | --- | --- | ---
-es:dinero | 0.7764511701706492 | en:sharks | 0.7219060597578505 | cs:hradu | 0.6808795284725409
-en:money | 0.7589496187578301 | es:tiburón | 0.7069522367754908 | cs:hradem | 0.6679039554027363
-de:geld | 0.74659130333184 | en:whale | 0.6484704240018047 | de:burg | 0.6460313882573998
-cs:peněz | 0.7461837907364881 | es:tiburones | 0.6151122323946746 | en:castle | 0.6281190412873391
-cs:penězi | 0.6919462493571249 | en:crocodile | 0.6103671715347587 | cs:zřícenina | 0.6167353945941583
-cs:částky | 0.6850862108242964 | en:whales | 0.6103441632958714 | cs:hradů | 0.6158144724587975
-cs:peněžní | 0.6793245588961937 | de:haie | 0.6039493893537548 | cs:hrádek | 0.615672134143293
-cs:finance | 0.6773270606149787 | en:squid | 0.5994782519731634 | cs:zámek | 0.6149004856917221
-cs:půjčky | 0.6625967014182128 | en:fish | 0.5969265982843568 | cs:hradní | 0.6021873835107618
-cs:dluhy | 0.6597797034203269 | cs:žralok | 0.5948264997773705 | cs:pustý | 0.5953593602607528
+es:dinero | 0.794822444554959 | en:carcharhinus | 0.723121767241696 | cs:hradu | 0.7943347479664206
+cs:peněz | 0.7809672041352884 | en:sharks | 0.7219060597578505 | cs:helfštejn | 0.7423779280148204
+de:geld | 0.7790526197552458 | es:tiburón | 0.692294583032867 | de:burg | 0.7321989204886661
+cs:penězům | 0.763397466742513 | en:dogfish | 0.6700094701193352 | cs:hradem | 0.7155468470793286
+en:money | 0.7625545198496401 | en:blacktip | 0.6694173174148189 | cs:vízmburk | 0.6993257613389967
+cs:penězi | 0.7246827873981334 | en:shortfin | 0.6594076796230587 | cs:zřícenina | 0.6959378290268604
+cs:finance | 0.7164360995227772 | en:stingray | 0.6585338651141033 | cs:zříceninu | 0.6884405174723626
+cs:vydělané | 0.7097162659838309 | en:scorpionfish | 0.6550821987330091 | cs:hradní | 0.6882719893594978
+cs:vydělat | 0.7040050143013978 | en:catshark | 0.6549521191225972 | en:castle | 0.6808938879216446
+cs:dluhy | 0.6991525340862323 | en:hammerhead | 0.6535834067676625 | cs:zříceninou | 0.6805074123170342
 
 
  - MUSE: Multilingual Unsupervised and Supervised Embeddings

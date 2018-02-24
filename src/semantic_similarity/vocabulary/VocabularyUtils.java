@@ -53,7 +53,7 @@ public class VocabularyUtils {
         createTranslationVectorPairs(spanishVectors, englishVectors, VOCABULARY_PATH + "vocabulary_es-en.txt",
                 TEMP_PATH + "vectors-es-en_es.txt", TEMP_PATH + "vectors-es-en_en.txt");
 
-        createTranslationVectorPairs(chineseVectors, englishVectors, VOCABULARY_PATH + "manual-vocabulary_zh-en.txt",
+        createTranslationVectorPairs(chineseVectors, englishVectors, VOCABULARY_PATH + "vocabulary_zh-en.txt",
                 TEMP_PATH + "vectors-zh-en_zh.txt", TEMP_PATH + "vectors-zh-en_en.txt");
     }
 

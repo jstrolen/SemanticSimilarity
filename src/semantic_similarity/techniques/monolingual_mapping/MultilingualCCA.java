@@ -26,8 +26,8 @@ public class MultilingualCCA {
      * Postup pro Multilingual CCA
      */
     public static void multilingualCCA() {
-        //Redukujeme pocet slov z fasttext na top 30 000
-        IOUtils.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-30k", 30000);
+        //Redukujeme pocet slov z fasttext na top 200 000
+        IOUtils.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-200k", 200000);
 
         /*
         //puvodni verze s manualnimi preklady
@@ -43,13 +43,13 @@ public class MultilingualCCA {
         */
 
         //Za slova ve slovniku dosadime vektory
-        VocabularyUtils.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-30k");
+        VocabularyUtils.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-200k");
 
         //Najdeme transformacni matici CCA
         //get CCA vectors - matlab script
 
         //Transformuje jazyky do spolecneho prostoru
-        MultilingualCCA.transformToCommonSpace("fasttext-30k");
+        MultilingualCCA.transformToCommonSpace("fasttext-200k");
     }
 
     /**
