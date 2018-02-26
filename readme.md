@@ -95,7 +95,7 @@
    - Dostupná Python knihovna pro trénování
    - Krom čínštiny již předtrénováno (supervised) 200 000 slov z každého jazyka z fasttext (převod do en prostoru)
    - Čínština lze domapovat
-   - TODO - domapovat
+   - Trénování lze zvolit unsupervised, nebo supervised (slovníky)
    - Pozn.:
      - Obtížné zprovoznění na cs Windows 
        - v kódu explicitně zapsat dekódování souborů na UTF-8 
@@ -103,6 +103,10 @@
        - nainstalovat (neoficiální Windows) PyTorch
        - vypnout CUDA - mám ATi/AMD 
        - knihovna Faiss jen pro Mac a Linux -> bez ní pomalé
+     - Vzhledem k rychlosti prozatím domapováno pouze 30 000 slov z čínštiny v 5 iteracích (trvalo 40 min, exponenciální složitost)
+       - `python supervised.py --src_lang en --tgt_lang zh --src_emb data/wiki.en.vec --tgt_emb data/wiki.zh.vec --n_iter 5 --dico_train default --cuda False --max_vocab 30000`
+       - dohromady tedy 830 000 slov; 2,6GB
+     - `MUSE.MUSE();`
 
 
 ---
@@ -148,6 +152,22 @@ cs:dluhy | 0.6991525340862323 | en:hammerhead | 0.6535834067676625 | cs:zřícen
 
 
  - MUSE: Multilingual Unsupervised and Supervised Embeddings
-   - Je nutné do společného prostoru domapovat čínštinu
-   - TODO - domapovat
+   - Předtrénované multilinguální vektory (supervised, 4x 200 000 slov) a domapovaná čínština (supervised, 30 000 slov)
+   
+cs:peníze |  | en:shark |  | cs:hrad |  |
+--- | --- | --- | --- | --- | ---
+Slovo | Podobnost | Slovo | Podobnost | Slovo | Podobnost
+--- | --- | --- | --- | --- | ---
+de:geld | 0.7979514816228422 | en:carcharhinus | 0.7231217871350608 | cs:hradu | 0.821978286914752
+en:money | 0.7914391893970232 | en:sharks | 0.7219060519879588 | en:castle | 0.7693858292650378
+es:dinero | 0.7729832775362181 | es:tiburón | 0.6709686319411391 | de:burg | 0.7402589464304365
+cs:peněz | 0.7650456338195846 | en:dogfish | 0.6700094126434437 | cs:helfštejn | 0.7191515041690829
+cs:penězům | 0.6858683080088624 | en:blacktip | 0.6694174515862609 | cs:zřícenina | 0.7072298972222949
+en:monies | 0.6737805603720992 | en:shortfin | 0.6594076564311624 | cs:hradní | 0.7051339485804149
+de:bezahlen | 0.6733410108787287 | en:stingray | 0.6585337757185132 | es:castillo | 0.7031784040363017
+de:begleichen | 0.6703246020692525 | en:scorpionfish | 0.655082239552549 | cs:hradem | 0.7019091448925688
+de:geldbeträge | 0.657581413445006 | en:catshark | 0.6549520475657062 | cs:zříceninu | 0.6785656168968273
+de:zurückzahlen | 0.655849906056689 | de:shark | 0.6537261118449005 | cs:hradů | 0.6721736302330118
+
+
 
