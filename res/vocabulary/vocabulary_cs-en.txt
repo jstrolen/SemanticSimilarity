@@ -4179,7 +4179,7 @@ učil	taught
 širší	wider
 širší	broader
 těžce	hard
-alfa	alpha
+alfa	defaultAlpha
 alfa	alfa
 georg	georg
 statek	farm
@@ -9163,7 +9163,7 @@ gov	gov
 panorama	panorama
 panorama	skyline
 kancléř	chancellor
-alpha	alpha
+defaultAlpha	defaultAlpha
 mercury	mercury
 jet	jet
 arménie	armenia

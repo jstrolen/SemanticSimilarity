@@ -1,16 +1,14 @@
 package semantic_similarity.techniques.monolingual_mapping;
 
-import semantic_similarity.io_utils.FastTextUtil;
-import semantic_similarity.io_utils.IEmbeddingUtil;
-import semantic_similarity.io_utils.IOUtils;
-import semantic_similarity.io_utils.MyEmbeddingUtil;
-import semantic_similarity.word_embedding.ELanguage;
-import semantic_similarity.word_embedding.UnifiedVectorSpace;
+import semantic_similarity.utils.embedding.FastTextUtil;
+import semantic_similarity.utils.embedding.IEmbeddingUtil;
+import semantic_similarity.utils.embedding.MyEmbeddingUtil;
+import semantic_similarity.VectorSpace;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static semantic_similarity.utils.Settings.EMBEDDING_PATH;
+import static semantic_similarity.Settings.EMBEDDING_PATH;
 
 /**
  * @author Josef Stroleny
@@ -34,20 +32,20 @@ public class MUSE {
     private static void saveToSingleFile(String name) {
         IEmbeddingUtil source_util = new FastTextUtil();
         IEmbeddingUtil target_util = new MyEmbeddingUtil();
-        List<UnifiedVectorSpace> commonSpaces = new ArrayList<>();
+        List<VectorSpace> commonSpaces = new ArrayList<>();
         //cs
-        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_cs.txt", ELanguage.CZECH, Integer.MAX_VALUE));
+        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_cs.txt", Integer.MAX_VALUE));
         //de
-        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_de.txt", ELanguage.GERMAN, Integer.MAX_VALUE));
+        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_de.txt", Integer.MAX_VALUE));
         //en
-        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_en.txt", ELanguage.ENGLISH, Integer.MAX_VALUE));
+        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_en.txt", Integer.MAX_VALUE));
         //es
-        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_es.txt", ELanguage.SPANISH, Integer.MAX_VALUE));
+        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_es.txt", Integer.MAX_VALUE));
         //zh
-        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_zh.txt", ELanguage.CHINESE, Integer.MAX_VALUE));
+        commonSpaces.add(source_util.loadSpace(EMBEDDING_PATH + name + "_zh.txt", Integer.MAX_VALUE));
 
         //merge spaces
-        UnifiedVectorSpace multilingualEmbeddings = UnifiedVectorSpace.mergeVectorSpaces(commonSpaces);
+        VectorSpace multilingualEmbeddings = VectorSpace.mergeVectorSpaces(commonSpaces);
         target_util.saveSpace(EMBEDDING_PATH + name + "_multilingual.txt", multilingualEmbeddings);
     }
 }

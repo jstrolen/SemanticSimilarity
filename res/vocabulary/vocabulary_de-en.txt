@@ -12755,7 +12755,7 @@ bonner bonner
 wohnsitz resident
 wohnsitz residence
 wohnsitz domicile
-alpha alpha
+defaultAlpha defaultAlpha
 studiert studied
 rheinischen rhenish
 berkeley berkeley
@@ -20659,7 +20659,7 @@ verlegen laying
 verlegen embarrassed
 gerard gerard
 genoss enjoyed
-alfa alpha
+alfa defaultAlpha
 alfa alfa
 vernünftige sensible
 datenblatt datasheet

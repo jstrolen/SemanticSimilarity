@@ -1,6 +1,6 @@
 .idea/
 out/
-res/testing/
+res/temp/
 res/corpus/
 res/embedding/
 res/network/

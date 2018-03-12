@@ -1,11 +1,9 @@
-package semantic_similarity.word_embedding;
+package semantic_similarity;
 
 /**
  * @author Josef Stroleny
  */
 public enum ELanguage {
-    MULTILINGUAL ("multi"),
-
     CZECH ("cs"),
     ENGLISH ("en"),
     GERMAN ("de"),
@@ -19,8 +17,11 @@ public enum ELanguage {
     }
 
     public static ELanguage fromString(String text) {
+        if (text == null) return null;
+
+        String substring = text.substring(0, 2);
         for (ELanguage lang : ELanguage.values()) {
-            if (lang.toString().equalsIgnoreCase(text)) {
+            if (lang.toString().equalsIgnoreCase(substring)) {
                 return lang;
             }
         }

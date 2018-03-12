@@ -1,22 +1,21 @@
 package semantic_similarity.techniques.monolingual_mapping;
 
-import semantic_similarity.io_utils.FastTextUtil;
-import semantic_similarity.io_utils.IEmbeddingUtil;
-import semantic_similarity.io_utils.IOUtils;
-import semantic_similarity.io_utils.MyEmbeddingUtil;
-import semantic_similarity.vocabulary.VocabularyUtils;
-import semantic_similarity.word_embedding.ELanguage;
-import semantic_similarity.word_embedding.UnifiedVectorSpace;
-import semantic_similarity.word_embedding.WordVector;
+import semantic_similarity.utils.embedding.EmbeddingUtils;
+import semantic_similarity.utils.embedding.FastTextUtil;
+import semantic_similarity.utils.embedding.IEmbeddingUtil;
+import semantic_similarity.utils.embedding.MyEmbeddingUtil;
+import semantic_similarity.utils.dictionary.DictionaryUtils;
+import semantic_similarity.VectorSpace;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static semantic_similarity.utils.Settings.EMBEDDING_PATH;
-import static semantic_similarity.utils.Settings.TEMP_PATH;
+import static semantic_similarity.Settings.EMBEDDING_PATH;
+import static semantic_similarity.Settings.TEMP_PATH;
 
 /**
  * @author Josef Stroleny
@@ -27,23 +26,23 @@ public class MultilingualCCA {
      */
     public static void multilingualCCA() {
         //Redukujeme pocet slov z fasttext na top 200 000
-        IOUtils.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-200k", 200000);
+        EmbeddingUtils.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-200k", 200000);
 
         /*
         //puvodni verze s manualnimi preklady
 
         //Ulozime do samostatnych souboru slova z embeddingu
-        IOUtils.getWordsFromEmbeddings(new MyEmbeddingUtil(), "fasttext-30k");
+        EmbeddingUtils.printWordsFromEmbeddings(new MyEmbeddingUtil(), "fasttext-30k");
 
         //RUCNE - Vytvorime preklady slov do anglictiny (en == cilovy jazyk)
         //manually create translations
 
         //Ze slov a jejich prekladu vytvorime prekladovy slovnik
-        VocabularyUtils.createAllTranslationWordPairs();
+        DictionaryUtils.createAllTranslationWordPairs();
         */
 
         //Za slova ve slovniku dosadime vektory
-        VocabularyUtils.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-200k");
+        DictionaryUtils.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-200k");
 
         //Najdeme transformacni matici CCA
         //get CCA vectors - matlab script
@@ -58,24 +57,24 @@ public class MultilingualCCA {
      */
     public static void transformToCommonSpace(String name) {
         IEmbeddingUtil util = new MyEmbeddingUtil();
-        List<UnifiedVectorSpace> commonSpaces = new ArrayList<>();
+        List<VectorSpace> commonSpaces = new ArrayList<>();
         //cs-en
-        UnifiedVectorSpace source = util.loadSpace(EMBEDDING_PATH + name + "_cs.txt", ELanguage.CZECH, Integer.MAX_VALUE);
+        VectorSpace source = util.loadSpace(EMBEDDING_PATH + name + "_cs.txt", Integer.MAX_VALUE);
         commonSpaces.add(transformLanguageToCommonSpace(source, TEMP_PATH + "cca-cs-en.txt"));
         //de-en
-        source = util.loadSpace(EMBEDDING_PATH + name + "_de.txt", ELanguage.GERMAN, Integer.MAX_VALUE);
+        source = util.loadSpace(EMBEDDING_PATH + name + "_de.txt", Integer.MAX_VALUE);
         commonSpaces.add(transformLanguageToCommonSpace(source, TEMP_PATH + "cca-de-en.txt"));
         //es-en
-        source = util.loadSpace(EMBEDDING_PATH + name + "_es.txt", ELanguage.SPANISH, Integer.MAX_VALUE);
+        source = util.loadSpace(EMBEDDING_PATH + name + "_es.txt", Integer.MAX_VALUE);
         commonSpaces.add(transformLanguageToCommonSpace(source, TEMP_PATH + "cca-es-en.txt"));
         //zh-en
-        source = util.loadSpace(EMBEDDING_PATH + name + "_zh.txt", ELanguage.CHINESE, Integer.MAX_VALUE);
+        source = util.loadSpace(EMBEDDING_PATH + name + "_zh.txt", Integer.MAX_VALUE);
         commonSpaces.add(transformLanguageToCommonSpace(source, TEMP_PATH + "cca-zh-en.txt"));
         //en
-        commonSpaces.add(util.loadSpace(EMBEDDING_PATH + name + "_en.txt", ELanguage.ENGLISH, Integer.MAX_VALUE));
+        commonSpaces.add(util.loadSpace(EMBEDDING_PATH + name + "_en.txt", Integer.MAX_VALUE));
 
         //merge spaces
-        UnifiedVectorSpace multilingualEmbeddings = UnifiedVectorSpace.mergeVectorSpaces(commonSpaces);
+        VectorSpace multilingualEmbeddings = VectorSpace.mergeVectorSpaces(commonSpaces);
         util.saveSpace(EMBEDDING_PATH + name + "_multilingual.txt", multilingualEmbeddings);
     }
 
@@ -85,8 +84,8 @@ public class MultilingualCCA {
      * @param multiplyMatrixPath Cesta k transformacni matici (ctvercova matice, dimenze odpovida poctu priznaku v monolingualnim prostoru)
      * @return Puvodni jazyk transformovany do multilingualniho prostoru
      */
-    private static UnifiedVectorSpace transformLanguageToCommonSpace(UnifiedVectorSpace sourceSpace, String multiplyMatrixPath) {
-        UnifiedVectorSpace targetSpace = new UnifiedVectorSpace(ELanguage.MULTILINGUAL);
+    private static VectorSpace transformLanguageToCommonSpace(VectorSpace sourceSpace, String multiplyMatrixPath) {
+        VectorSpace targetSpace = new VectorSpace();
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(multiplyMatrixPath)));
@@ -100,18 +99,17 @@ public class MultilingualCCA {
                 }
             }
 
-            for (WordVector sourceWordVector : sourceSpace.getWords().values()) {
+            for (Map.Entry<String, float[]> sourceWordVector : sourceSpace.getVectorSpace().entrySet()) {
                 float[] targetVector = new float[dimension];
                 for (int i = 0; i < dimension; i++) {
                     float sum = 0.0f;
                     for (int j = 0; j < dimension; j++) {
-                        sum += sourceWordVector.getVector()[j] * multiplyMatrix[i][j];
+                        sum += sourceWordVector.getValue()[j] * multiplyMatrix[i][j];
                     }
                     targetVector[i] = sum;
                 }
 
-                WordVector targetWordVector = new WordVector(sourceWordVector.getLanguage(), sourceWordVector.getWord(), targetVector);
-                targetSpace.addWord(targetWordVector);
+                targetSpace.addWord(sourceWordVector.getKey(), targetVector);
             }
 
         } catch (Exception e) {

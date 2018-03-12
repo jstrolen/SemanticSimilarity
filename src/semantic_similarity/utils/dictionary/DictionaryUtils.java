@@ -1,21 +1,19 @@
-package semantic_similarity.vocabulary;
+package semantic_similarity.utils.dictionary;
 
-import semantic_similarity.io_utils.IEmbeddingUtil;
-import semantic_similarity.io_utils.MyEmbeddingUtil;
-import semantic_similarity.word_embedding.ELanguage;
-import semantic_similarity.word_embedding.UnifiedVectorSpace;
-import semantic_similarity.word_embedding.WordVector;
+import semantic_similarity.utils.embedding.IEmbeddingUtil;
+import semantic_similarity.ELanguage;
+import semantic_similarity.VectorSpace;
 
 import java.io.*;
 
-import static semantic_similarity.utils.Settings.EMBEDDING_PATH;
-import static semantic_similarity.utils.Settings.TEMP_PATH;
-import static semantic_similarity.utils.Settings.VOCABULARY_PATH;
+import static semantic_similarity.Settings.EMBEDDING_PATH;
+import static semantic_similarity.Settings.TEMP_PATH;
+import static semantic_similarity.Settings.VOCABULARY_PATH;
 
 /**
  * @author Josef Stroleny
  */
-public class VocabularyUtils {
+public class DictionaryUtils {
     /**
      * Vezme slova ze zdrojového jazyka, jejich překlady do cílového jazyka (angličtina),
      * odstraní víceslovná slova a členy a uloží výstup jako překladový slovník
@@ -38,11 +36,11 @@ public class VocabularyUtils {
      * Vezme natrenovane monolingualni jazykove modely a prekladovy slovnik a ulozi do dvou souboru vektory zdrojoveho a ciloveho jazyka
      */
     public static void createAllTranslationVectorPairs(IEmbeddingUtil embedding, String vectorName) {
-        UnifiedVectorSpace englishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_en.txt", ELanguage.ENGLISH, Integer.MAX_VALUE);
-        UnifiedVectorSpace czechVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_cs.txt", ELanguage.CZECH, Integer.MAX_VALUE);
-        UnifiedVectorSpace germanVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_de.txt", ELanguage.GERMAN, Integer.MAX_VALUE);
-        UnifiedVectorSpace spanishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_es.txt", ELanguage.SPANISH, Integer.MAX_VALUE);
-        UnifiedVectorSpace chineseVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_zh.txt", ELanguage.CHINESE, Integer.MAX_VALUE);
+        VectorSpace englishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_en.txt", Integer.MAX_VALUE);
+        VectorSpace czechVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_cs.txt", Integer.MAX_VALUE);
+        VectorSpace germanVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_de.txt", Integer.MAX_VALUE);
+        VectorSpace spanishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_es.txt", Integer.MAX_VALUE);
+        VectorSpace chineseVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_zh.txt", Integer.MAX_VALUE);
 
         createTranslationVectorPairs(czechVectors, englishVectors, VOCABULARY_PATH + "vocabulary_cs-en.txt",
                 TEMP_PATH + "vectors-cs-en_cs.txt", TEMP_PATH + "vectors-cs-en_en.txt");
@@ -87,7 +85,7 @@ public class VocabularyUtils {
         }
     }
 
-    private static void createTranslationVectorPairs(UnifiedVectorSpace sourceVectors, UnifiedVectorSpace targetVectors,
+    private static void createTranslationVectorPairs(VectorSpace sourceVectors, VectorSpace targetVectors,
                                                      String vocabularyPairs, String sourceOutput, String targetOutput) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(vocabularyPairs)));
@@ -100,17 +98,17 @@ public class VocabularyUtils {
 
                 String source = pair[0];
                 String target = pair[1];
-                WordVector sourceVector = sourceVectors.getWord(source);
-                WordVector targetVector = targetVectors.getWord(target);
+                float[] sourceVector = sourceVectors.getVector(source);
+                float[] targetVector = targetVectors.getVector(target);
                 if (sourceVector == null || targetVector == null) continue;
 
-                for (int i = 0; i < sourceVector.getVector().length; i++) {
-                    bw_source.write(String.valueOf(sourceVector.getVector()[i]) + " ");
+                for (int i = 0; i < sourceVector.length; i++) {
+                    bw_source.write(String.valueOf(sourceVector[i]) + " ");
                 }
                 bw_source.newLine();
 
-                for (int i = 0; i < targetVector.getVector().length; i++) {
-                    bw_target.write(String.valueOf(targetVector.getVector()[i]) + " ");
+                for (int i = 0; i < targetVector.length; i++) {
+                    bw_target.write(String.valueOf(targetVector[i]) + " ");
                 }
                 bw_target.newLine();
             }

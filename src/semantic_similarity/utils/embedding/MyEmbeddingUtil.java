@@ -1,10 +1,10 @@
-package semantic_similarity.io_utils;
+package semantic_similarity.utils.embedding;
 
-import semantic_similarity.word_embedding.ELanguage;
-import semantic_similarity.word_embedding.UnifiedVectorSpace;
-import semantic_similarity.word_embedding.WordVector;
+import semantic_similarity.ELanguage;
+import semantic_similarity.VectorSpace;
 
 import java.io.*;
+import java.util.Map;
 
 /**
  * @author Josef Stroleny
@@ -21,8 +21,8 @@ import java.io.*;
  */
 public class MyEmbeddingUtil implements IEmbeddingUtil {
     @Override
-    public UnifiedVectorSpace loadSpace(String path, ELanguage language, int maxCount) {
-        UnifiedVectorSpace unifiedVectorSpace = new UnifiedVectorSpace(language);
+    public VectorSpace loadSpace(String path, int maxCount) {
+        VectorSpace VectorSpace = new VectorSpace();
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(path)));
             String[] header = br.readLine().split(" ");
@@ -33,20 +33,17 @@ public class MyEmbeddingUtil implements IEmbeddingUtil {
             for (int i = 0; i < wordCount; i++) {
                 String[] string = br.readLine().split(" ");
 
-                String wordLanguage = string[0];
-                if ((language != ELanguage.MULTILINGUAL) && (!wordLanguage.equals(language.toString()))) continue;
-
+                ELanguage wordLanguage = ELanguage.fromString(string[0]);
                 String word = string[1];
                 float[] vector = new float[vectorDimension];
                 for (int vector_i = 0; vector_i < vectorDimension; vector_i++) {
                     vector[vector_i] = Float.parseFloat(string[vector_i + 2]);
                 }
 
-                WordVector wordVector = new WordVector(ELanguage.fromString(wordLanguage), word, vector);
-                unifiedVectorSpace.addWord(wordVector);
+                VectorSpace.addWord(wordLanguage, word, vector);
             }
 
-            return unifiedVectorSpace;
+            return VectorSpace;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,18 +53,19 @@ public class MyEmbeddingUtil implements IEmbeddingUtil {
     }
 
     @Override
-    public void saveSpace(String path, UnifiedVectorSpace unifiedVectorSpace) {
+    public void saveSpace(String path, VectorSpace vectorSpace) {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(new File(path)));
 
-            bw.write(unifiedVectorSpace.getSize() + " " + unifiedVectorSpace.getDimension());
+            bw.write(vectorSpace.getSize() + " " + vectorSpace.getDimension());
             bw.newLine();
 
-            for (WordVector vector : unifiedVectorSpace.getWords().values()) {
-                bw.write(vector.getLanguage().toString());
-                bw.write(" " + vector.getWord());
+            for (Map.Entry<String, float[]> vector : vectorSpace.getVectorSpace().entrySet()) {
 
-                for(float f : vector.getVector()) {
+                bw.write(vector.getKey().substring(0, 2));
+                bw.write(" " + vector.getKey().substring(3));
+
+                for(float f : vector.getValue()) {
                     bw.write(" " + String.valueOf(f));
                 }
 

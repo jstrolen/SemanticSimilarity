@@ -1,8 +1,7 @@
-package semantic_similarity.io_utils;
+package semantic_similarity.utils.embedding;
 
-import semantic_similarity.word_embedding.ELanguage;
-import semantic_similarity.word_embedding.UnifiedVectorSpace;
-import semantic_similarity.word_embedding.WordVector;
+import semantic_similarity.ELanguage;
+import semantic_similarity.VectorSpace;
 
 import java.io.*;
 
@@ -13,10 +12,12 @@ import java.io.*;
  */
 public class FastTextUtil implements IEmbeddingUtil {
     @Override
-    public UnifiedVectorSpace loadSpace(String path, ELanguage language, int maxCount) {
-        UnifiedVectorSpace unifiedVectorSpace = new UnifiedVectorSpace(language);
+    public VectorSpace loadSpace(String path, int maxCount) {
+        VectorSpace VectorSpace = new VectorSpace();
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+
+            ELanguage language = ELanguage.fromString(path.substring(Math.max(path.length() - 6, 0), Math.max(path.length() - 6, 0) + 2));
             String[] header = br.readLine().split(" ");
 
             int wordCount = Math.min(Integer.parseInt(header[0]), maxCount);
@@ -31,21 +32,18 @@ public class FastTextUtil implements IEmbeddingUtil {
                     vector[vector_i] = Float.parseFloat(string[vector_i + 1]);
                 }
 
-                WordVector wordVector = new WordVector(language, word, vector);
-                unifiedVectorSpace.addWord(wordVector);
+                VectorSpace.addWord(language, word, vector);
             }
 
-            return unifiedVectorSpace;
-
+            return VectorSpace;
         } catch (Exception e) {
             e.printStackTrace();
-
         }
         return null;
     }
 
     @Override
-    public void saveSpace(String path, UnifiedVectorSpace unifiedVectorSpace) {
-
+    public void saveSpace(String path, VectorSpace vectorSpace) {
+        //not used
     }
 }

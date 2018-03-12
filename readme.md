@@ -63,10 +63,7 @@
 #### Testovací data
  - SemEval-2017 Task 2 (http://alt.qcri.org/semeval2017/task2/index.php?id=data-and-tools)
    - Trial a test data
-   - Jiné jazyky -> použitelné pouze de-es, en-de, en-es
-  
-
- - TODO - sehnat lepší data
+   - Jiné jazyky -> použitelné pouze de-es, en-de, en-es a monolinguální de, en, es
 
 
 ---
@@ -82,7 +79,7 @@
    - Namapovat zdrojový jazyk do prostoru cílového jazyka -> `nové_vektory = zdrojové_vektory * A * inv(B)`
    - Pozn.:
      - CCA z Matlabu
-     - `techniques.monolingual_mapping.MultilingualCCA.multilingualCCA();`
+     - `semantic_similarity.techniques.monolingual_mapping.MultilingualCCA.multilingualCCA();`
      - Vstupem natrénované monolinguální vektory Fasttext
      - Pracováno s ~~30 000~~ 200 000 nejčetnějšími slovy z každého jazyka
      - Původně použity vlastní překlady (MS překladač), nyní slovníky z MUSE (obsáhlejší)
@@ -106,15 +103,44 @@
      - Vzhledem k rychlosti prozatím domapováno pouze 30 000 slov z čínštiny v 5 iteracích (trvalo 40 min, exponenciální složitost)
        - `python supervised.py --src_lang en --tgt_lang zh --src_emb data/wiki.en.vec --tgt_emb data/wiki.zh.vec --n_iter 5 --dico_train default --cuda False --max_vocab 30000`
        - dohromady tedy 830 000 slov; 2,6GB
-     - `MUSE.MUSE();`
+     - `semantic_similarity.techniques.monolingual_mapping.MUSE.MUSE();`
+
+
+#### Pseudo-crosslinguální metody
+ - Random translation replacement
+   - Vstupem monolinguální korpusy a slovník
+   - Pokud je slovo v korpusu ve slovníku, je s určitou pravděpodobností (50%) nahrazeno překladem
+   - Pozn.: 
+     - Slovníky použity z MUSE, korpusy dokumenty z wikipedie
+     - Namapovány 3 jazyky (de, en, es - jsou pro ně testovací data), 50M slov z každého jazyka, trvalo cca 500 min, celkem dobrá úspěšnost (viz výsledky dole)
+     - `fasttext.exe skipgram -input test.txt -output test -minn 6 -maxn 9 -dim 300 -thread 4 -epoch 5`
+   - `semantic_similarity.techniques.pseudocrosslingual.RandomTranslationReplacement.RandomTranslationReplacement();`
+
+
+#### Spojitě optimalizované metody
+ - Bilingual skip-gram without word alignments
+   - Větně zarovnaný korpus, trénováno skipgramem jako kdyby byla všechna slova v obou větách v jednom kontextu
+   - Jednodušší verze "Bilingual skip-gram" - namísto "word-aligned" dat jen "sentence-aligned"
+   - TODO - natrénovat
 
 
 ---
 
 
-## Nejpodobnější slova
+## Úspěšnost
  - ConceptNet Numberbatch
    - Předtrénovaný multilinguální prostor, pouze odstraněny nepoužité jazyky
+
+SEMEVAL17 - Pearson correlation | bez "Out Of Vocabulary" slov | s "Out Of Vocabulary" slovy
+--- | --- | --- 
+monolingual | --- | ---
+de | 0.847411268228453 | 0.6522335437441397
+en | 0.855976335279131 | 0.5104775436046365
+es | 0.7937999235530263 | 0.6302536298347983
+crosslingual | --- | ---
+de-es | 0.8298255541938392 | 0.6372773362686521
+en-de | 0.8507723588368765 | 0.5382434415153802
+en-es | 0.8310435977588254 | 0.5398300103376948
 
 cs:peníze |  | en:shark |  | cs:hrad |  |
 --- | --- | --- | --- | --- | ---
@@ -134,6 +160,18 @@ cs:peníz | 0.93312080559326 | en:lamnoid | 0.9532720686140282 | de:burgmauer | 
 
  - Multilingual CCA
    - Multilinguální prostor vytvořený z ~~30 000~~ 200 000 nejčastějších slov z každého jazyka (tj. dohromady ~~150 000~~ 1 000 000 slov) z předtrénovaných Fasttext embeddingů
+   - Velice rychlá metoda (výpočet CCA řádově vteřiny), přesto dobré výsledky (podmínkou kvalitní monolinguální modely)
+
+SEMEVAL17 - Pearson correlation | bez "Out Of Vocabulary" slov | s "Out Of Vocabulary" slovy
+--- | --- | --- 
+monolingual | --- | ---
+de | 0.7050575289735371 | 0.5901455907260486
+en | 0.717335747873895 | 0.5945117946322338
+es | 0.6957949931158292 | 0.5810317111491937
+crosslingual | --- | ---
+de-es | 0.6852683774288119 | 0.5525196868275529
+en-de | 0.7050648332717674 | 0.5663751216373146
+en-es | 0.6968777517325578 | 0.5535558200245955
 
 cs:peníze |  | en:shark |  | cs:hrad |  |
 --- | --- | --- | --- | --- | ---
@@ -153,6 +191,17 @@ cs:dluhy | 0.6991525340862323 | en:hammerhead | 0.6535834067676625 | cs:zřícen
 
  - MUSE: Multilingual Unsupervised and Supervised Embeddings
    - Předtrénované multilinguální vektory (supervised, 4x 200 000 slov) a domapovaná čínština (supervised, 30 000 slov)
+
+SEMEVAL17 - Pearson correlation | bez "Out Of Vocabulary" slov | s "Out Of Vocabulary" slovy
+--- | --- | --- 
+monolingual | --- | ---
+de | 0.7212287970222993 | 0.5949220502155451
+en | 0.7173357519049449 | 0.5945117991566718
+es | 0.7171908550425621 | 0.585510881432348
+crosslingual | --- | ---
+de-es | 0.692768744283659 | 0.5560311766685223
+en-de | 0.7064796001235065 | 0.5718291004330889
+en-es | 0.702793480944883 | 0.5623359900382704
    
 cs:peníze |  | en:shark |  | cs:hrad |  |
 --- | --- | --- | --- | --- | ---
@@ -170,4 +219,41 @@ de:geldbeträge | 0.657581413445006 | en:catshark | 0.6549520475657062 | cs:zř�
 de:zurückzahlen | 0.655849906056689 | de:shark | 0.6537261118449005 | cs:hradů | 0.6721736302330118
 
 
+ - Random translation replacement
+   - Vzhledem k době trénování natrénováno pouze pro jazyky, pro něž jsou testovací data (de, en, es)
+   - Trénováno na 50M slov z každého jazyka (tj. cca 150M slov celkem)
+     - Fasttext, skipgram, dimenze 300, podslova veliksoti 6-9, 5 epoch, 50% šance na nahrazení slova -> celkem 8.5h na čtyřjádru AMD Phenom II X4 945 @ 3.0GHz
+     - Další výsledky z trénování na menších datech s různými parametry v souboru `test-Random_translation_replacement.txt`
+   - Dohromady 536 624 slov; 1,4GB
+   - Jednoduchá metoda a relativně málo dat, přesto dobré výsledky
+   - Použití kvalitnějších slovníků (větší slovník?, odstranění homonyn/polysémie?) a většího korpusu by mohlo výsledky dále vylepšit
 
+SEMEVAL17 - Pearson correlation | bez "Out Of Vocabulary" slov | s "Out Of Vocabulary" slovy
+--- | --- | --- 
+monolingual | --- | ---
+de | 0.7095687194776654 | 0.601595026452282
+en | 0.7008300842342249 | 0.5663820735936098
+es | 0.7076606420281139 | 0.5927552482631984
+crosslingual | --- | ---
+de-es | 0.6672049927598503 | 0.46366920328002426
+en-de | 0.708886943308597 | 0.5513709437939489
+en-es | 0.6873994960542912 | 0.5349455276426502
+   
+en:money |  | en:shark |  | en:castle |  |
+--- | --- | --- | --- | --- | ---
+Slovo | Podobnost | Slovo | Podobnost | Slovo | Podobnost
+--- | --- | --- | --- | --- | ---
+en:cash | 0.7802091277380974 | en:sharks | 0.783858368596248 | en:castlebar | 0.7947821572013472
+es:dinero | 0.776946917537483 | en:sharkey | 0.652582504114214 | es:castillo | 0.7754293073958934
+es:money | 0.7563549577834578 | es:tiburones | 0.6484808304485981 | en:castillo | 0.7687257305262725
+de:geld | 0.7429478992924003 | es:tiburón | 0.6216735880808024 | en:castles | 0.7623096498661934
+de:money | 0.7331227791527093 | en:alligator | 0.6031411105973857 | en:castletown | 0.7455865146208559
+en:moneyless | 0.6916541697375634 | en:urchin | 0.595592941841755 | en:castlereagh | 0.7189498005109685
+en:moneypenny | 0.6494915077985114 | de:haie | 0.5939999291063538 | en:castillon | 0.7129854660371171
+en:money-hungry | 0.6420859880296669 | es:cazatiburones | 0.5893560276121752 | en:fortress | 0.7063537842881026
+en:moneys | 0.6340414424325995 | en:carcharhinus | 0.5867014335310836 | de:burg | 0.7028221148617313
+es:diner | 0.6265573265727684 | en:alligators | 0.5842887992205139 | de:schloß | 0.6729173898666313
+
+
+ - Bilingual skip-gram without word alignments
+   - TODO - natrénovat
