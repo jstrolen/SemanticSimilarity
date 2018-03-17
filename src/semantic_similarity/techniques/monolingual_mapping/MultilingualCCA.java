@@ -1,21 +1,19 @@
 package semantic_similarity.techniques.monolingual_mapping;
 
-import semantic_similarity.utils.embedding.EmbeddingUtils;
+import semantic_similarity.ELanguage;
 import semantic_similarity.utils.embedding.FastTextUtil;
 import semantic_similarity.utils.embedding.IEmbeddingUtil;
 import semantic_similarity.utils.embedding.MyEmbeddingUtil;
-import semantic_similarity.utils.dictionary.DictionaryUtils;
 import semantic_similarity.VectorSpace;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static semantic_similarity.Settings.EMBEDDING_PATH;
 import static semantic_similarity.Settings.TEMP_PATH;
+import static semantic_similarity.Settings.VOCABULARY_PATH;
 
 /**
  * @author Josef Stroleny
@@ -24,31 +22,105 @@ public class MultilingualCCA {
     /**
      * Postup pro Multilingual CCA
      */
-    public static void multilingualCCA() {
-        //Redukujeme pocet slov z fasttext na top 200 000
-        EmbeddingUtils.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-200k", 200000);
-
-        /*
-        //puvodni verze s manualnimi preklady
-
-        //Ulozime do samostatnych souboru slova z embeddingu
-        EmbeddingUtils.printWordsFromEmbeddings(new MyEmbeddingUtil(), "fasttext-30k");
-
-        //RUCNE - Vytvorime preklady slov do anglictiny (en == cilovy jazyk)
-        //manually create translations
-
-        //Ze slov a jejich prekladu vytvorime prekladovy slovnik
-        DictionaryUtils.createAllTranslationWordPairs();
-        */
+    public MultilingualCCA() {
+        //Redukujeme pocet slov z fasttext na top 300 000
+        MultilingualCCA.reduceEmbeddingCount(new FastTextUtil(), "fasttext", new MyEmbeddingUtil(), "fasttext-300k", 300000);
 
         //Za slova ve slovniku dosadime vektory
-        DictionaryUtils.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-200k");
+        MultilingualCCA.createAllTranslationVectorPairs(new MyEmbeddingUtil(), "fasttext-300k");
 
         //Najdeme transformacni matici CCA
         //get CCA vectors - matlab script
 
         //Transformuje jazyky do spolecneho prostoru
-        MultilingualCCA.transformToCommonSpace("fasttext-200k");
+        MultilingualCCA.transformToCommonSpace("fasttext-300k");
+    }
+
+    /**
+     * Zredukuje pocet embeddingu a ulozi do souboru
+     */
+    public static void reduceEmbeddingCount(IEmbeddingUtil inputEmbedding, String inputVectorName, IEmbeddingUtil outputEmbedding, String vectorName, int count) {
+        VectorSpace czechVectors = inputEmbedding.loadSpace(EMBEDDING_PATH + inputVectorName + "_cs.txt", count);
+        outputEmbedding.saveSpace(EMBEDDING_PATH + vectorName + "_cs.txt", czechVectors);
+
+        VectorSpace englishVectors = inputEmbedding.loadSpace(EMBEDDING_PATH + inputVectorName + "_en.txt", count);
+        outputEmbedding.saveSpace(EMBEDDING_PATH + vectorName + "_en.txt", englishVectors);
+
+        VectorSpace germanVectors = inputEmbedding.loadSpace(EMBEDDING_PATH + inputVectorName + "_de.txt", count);
+        outputEmbedding.saveSpace(EMBEDDING_PATH + vectorName + "_de.txt", germanVectors);
+
+        VectorSpace spanishVectors = inputEmbedding.loadSpace(EMBEDDING_PATH + inputVectorName + "_es.txt", count);
+        outputEmbedding.saveSpace(EMBEDDING_PATH + vectorName + "_es.txt", spanishVectors);
+
+        VectorSpace chineseVectors = inputEmbedding.loadSpace(EMBEDDING_PATH + inputVectorName + "_zh.txt", count);
+        outputEmbedding.saveSpace(EMBEDDING_PATH + vectorName + "_zh.txt", chineseVectors);
+    }
+
+    /**
+     * Vezme natrenovane monolingualni jazykove modely a prekladovy slovnik a ulozi do dvou souboru vektory zdrojoveho a ciloveho jazyka
+     */
+    public static void createAllTranslationVectorPairs(IEmbeddingUtil embedding, String vectorName) {
+        VectorSpace englishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_en.txt", Integer.MAX_VALUE);
+        VectorSpace czechVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_cs.txt", Integer.MAX_VALUE);
+        VectorSpace germanVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_de.txt", Integer.MAX_VALUE);
+        VectorSpace spanishVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_es.txt", Integer.MAX_VALUE);
+        VectorSpace chineseVectors = embedding.loadSpace(EMBEDDING_PATH + vectorName + "_zh.txt", Integer.MAX_VALUE);
+
+        createTranslationVectorPairs(czechVectors, englishVectors, VOCABULARY_PATH + "vocabulary_cs-en.txt",
+                TEMP_PATH + "vectors-cs-en_cs.txt", TEMP_PATH + "vectors-cs-en_en.txt",
+                ELanguage.CZECH, ELanguage.ENGLISH);
+
+        createTranslationVectorPairs(germanVectors, englishVectors, VOCABULARY_PATH + "vocabulary_de-en.txt",
+                TEMP_PATH + "vectors-de-en_de.txt", TEMP_PATH + "vectors-de-en_en.txt",
+                ELanguage.GERMAN, ELanguage.ENGLISH);
+
+        createTranslationVectorPairs(spanishVectors, englishVectors, VOCABULARY_PATH + "vocabulary_es-en.txt",
+                TEMP_PATH + "vectors-es-en_es.txt", TEMP_PATH + "vectors-es-en_en.txt",
+                ELanguage.SPANISH, ELanguage.ENGLISH);
+
+        createTranslationVectorPairs(chineseVectors, englishVectors, VOCABULARY_PATH + "vocabulary_zh-en.txt",
+                TEMP_PATH + "vectors-zh-en_zh.txt", TEMP_PATH + "vectors-zh-en_en.txt",
+                ELanguage.CHINESE, ELanguage.ENGLISH);
+    }
+
+    private static void createTranslationVectorPairs(VectorSpace sourceVectors, VectorSpace targetVectors,
+                                                     String vocabularyPairs, String sourceOutput, String targetOutput,
+                                                     ELanguage sourceLanguage, ELanguage targetLanguage) {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(new File(vocabularyPairs)));
+            BufferedWriter bw_source = new BufferedWriter(new FileWriter(new File(sourceOutput)));
+            BufferedWriter bw_target = new BufferedWriter(new FileWriter(new File(targetOutput)));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String pair[] = line.split("\\s");
+                if (pair.length != 2) {
+                    pair = line.split("\\t");
+                    if (pair.length != 2) continue;
+                }
+
+                String source = sourceLanguage.toString() + ":" + pair[0];
+                String target = targetLanguage.toString() + ":" + pair[1];
+                float[] sourceVector = sourceVectors.getVector(source);
+                float[] targetVector = targetVectors.getVector(target);
+                if (sourceVector == null || targetVector == null) continue;
+
+                for (int i = 0; i < sourceVector.length; i++) {
+                    bw_source.write(String.valueOf(sourceVector[i]) + " ");
+                }
+                bw_source.newLine();
+
+                for (int i = 0; i < targetVector.length; i++) {
+                    bw_target.write(String.valueOf(targetVector[i]) + " ");
+                }
+                bw_target.newLine();
+            }
+
+            bw_source.flush();
+            bw_target.flush();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

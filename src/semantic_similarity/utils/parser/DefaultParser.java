@@ -1,6 +1,7 @@
 package semantic_similarity.utils.parser;
 
 import semantic_similarity.Settings;
+import semantic_similarity.utils.MyUtils;
 import semantic_similarity.utils.vocabulary.MyVocabulary;
 import semantic_similarity.ELanguage;
 
@@ -44,8 +45,6 @@ public class DefaultParser implements IParser {
     }
 
     private String normalize(String text) {
-        //text = Normalizer.normalize(text, Normalizer.Form.NFD);
-        //text = text.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         text = text.toLowerCase();
         text = text.replaceAll("[\\t\\n\\r]+"," ");
 

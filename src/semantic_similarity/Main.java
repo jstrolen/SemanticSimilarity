@@ -3,135 +3,85 @@ package semantic_similarity;
 import semantic_similarity.utils.MyUtils;
 import semantic_similarity.utils.dictionary.MyDictionary;
 import semantic_similarity.utils.document.DocumentHolder;
-import semantic_similarity.utils.embedding.FastTextMultilingualUtil;
-import semantic_similarity.utils.embedding.FastTextUtil;
-import semantic_similarity.utils.embedding.IEmbeddingUtil;
-import semantic_similarity.utils.embedding.MyEmbeddingUtil;
-import semantic_similarity.utils.parser.DefaultParser;
-import semantic_similarity.utils.parser.IParser;
-import semantic_similarity.techniques.word2vec.Word2vec;
+import semantic_similarity.utils.embedding.*;
 import semantic_similarity.utils.testing.TestHolder;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
-import static semantic_similarity.Settings.CORPUS_PATH;
-import static semantic_similarity.Settings.TESTING_PATH;
-import static semantic_similarity.Settings.VOCABULARY_PATH;
+import static semantic_similarity.Settings.*;
+import static semantic_similarity.utils.MyUtils.mergeVectorSpaces;
+import static semantic_similarity.utils.document.DocumentUtils.loadDocuments;
+import static semantic_similarity.utils.document.DocumentUtils.loadSentenceAlignedCorpus;
 
 /**
  * @author Josef Stroleny
  */
 public class Main {
     public static void main(String[] args) {
-        /*
-        1M, 10M, 20M, 50M
-        en - 0.4k, 4k, 8k, 20k
-        de - 0.6k, 7k, 13k, 40k
-        es - 0.5k, 6k, 17k, 45k
-        */
-
         try {
-            //nacteni testu
+            List<ELanguage> includedLanguages = new ArrayList<>();
+            includedLanguages.add(ELanguage.ENGLISH); includedLanguages.add(ELanguage.GERMAN); includedLanguages.add(ELanguage.SPANISH);
+
             TestHolder test = new TestHolder();
             test.load(TESTING_PATH);
 
-            /*
-            //nacteni slovniku
-            List<ELanguage> excludedLanguages = new ArrayList<>();
-            excludedLanguages.add(ELanguage.CZECH); excludedLanguages.add(ELanguage.CHINESE);
             MyDictionary dictionary = new MyDictionary();
-            dictionary.load(VOCABULARY_PATH, excludedLanguages);
+            dictionary.load(VOCABULARY_PATH, includedLanguages);
 
-
-            //Zamichani korpusu
-            DocumentHolder documents = DocumentHolder.load(CORPUS_PATH + "multilingual_unreduced_50M.txt");
-            documents.mixDocuments(dictionary, 0.5);
-            documents.savePlainText(CORPUS_PATH + "multilingual_unreduced_50M_plaintext_mixed0.5.txt", true);
-            */
-
-            IEmbeddingUtil util = new FastTextMultilingualUtil();
-            VectorSpace multilingual = util.loadSpace(Settings.EMBEDDING_PATH + "50M_unreduced_300_5e_sg_6-9_mixed0.5.vec", Integer.MAX_VALUE);
-            test.testAll(multilingual, true);
-            System.out.println();
-            test.testAll(multilingual, false);
-            System.out.println(multilingual.getSize());
 
             /*
             DocumentHolder documents = new DocumentHolder();
-            IParser parser = new DefaultParser();
-            BufferedReader br = new BufferedReader(new FileReader(new File(CORPUS_PATH + "document-aligned/en_full.txt")));
-            int count = 0;
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            while (line != null && count < 300) {
-                if (line.length() > 0) {
-                    sb.append(" " + line);
-                } else if (line.length() <= 0 && sb.length() > 0) {
-                    documents.addDocument(ELanguage.ENGLISH, parser, sb.toString());
-                    sb = new StringBuilder();
-                    count++;
-                }
-                line = br.readLine();
-            }
-            br.close();
-            System.out.println(documents.getVocabulary().getTotalCount());
-            System.out.println(documents.getVocabulary().size());
-
-            documents.savePlainText(CORPUS_PATH + "test.txt");
+            loadData(documents, includedLanguages, dictionary);
+            documents.savePlainText(CORPUS_PATH + "test.txt", true);
             */
 
-            //nejpodobnejsi slova
-            Map<String, Double> mostSimilar = multilingual.getMostSimilarWords("en:shark", 10);
-            for (Map.Entry<String, Double> entry : MyUtils.sortByValueDescending(mostSimilar).entrySet()) {
-                System.out.println(entry.getKey() + " = " + entry.getValue());
-            }
-            mostSimilar = multilingual.getMostSimilarWords("en:castle", 10);
-            for (Map.Entry<String, Double> entry : MyUtils.sortByValueDescending(mostSimilar).entrySet()) {
-                System.out.println(entry.getKey() + " = " + entry.getValue());
-            }
-            mostSimilar = multilingual.getMostSimilarWords("en:money", 10);
-            for (Map.Entry<String, Double> entry : MyUtils.sortByValueDescending(mostSimilar).entrySet()) {
-                System.out.println(entry.getKey() + " = " + entry.getValue());
-            }
+            //Zkouska uspesnosti
+            //VectorSpace multilingual = new FastTextMultilingualUtil().loadSpace(Settings.EMBEDDING_PATH + "50M_combined_300_5e_sg_6-9_30M+20M.vec", Integer.MAX_VALUE);
+            VectorSpace multilingual = VectorSpace.fromDump(TEMP_PATH + "cca+(dictionary+sentence)_dump");
+            test.testAll(multilingual);
+            System.out.println(multilingual.getSize());
 
-            /*
-            //trenovani
-            Word2vec embedding = new Word2vec(documents);
-            for (int i = 0; i < 100; i++) {
-                embedding.train(1);
+            printMostSimilarWords(multilingual, "en:money", "en:shark", "en:castle");
 
-                //showTopWords(embedding, "en:west");
-                //showTopWords(embedding, "en:food");
-                //showTopWords(embedding, "en:product");
-                //showTopWords(embedding, "en:science");
-                //showTopWords(embedding, "en:internet");
 
-                test.testAll(embedding.toVectorSpace(), true);
-                System.out.println();
-                test.testAll(embedding.toVectorSpace(), false);
-                System.out.println();
-                System.out.println();
-            }
-            */
+            /*List<VectorSpace> vs = new ArrayList<>();
+            vs.add(new MyEmbeddingUtil().loadSpace(Settings.EMBEDDING_PATH + "fasttext-300k_multilingual.txt", Integer.MAX_VALUE));
+            vs.add(multilingual);
+            mergeVectorSpaces(vs, true, false);*/
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void showTopWords(Word2vec embedding, String word) {
-        Map<String, Double> map = embedding.getMostSimilarWords(word, 10);
+    public static void loadData(DocumentHolder documents, List<ELanguage> includedLanguages, MyDictionary dictionary) throws IOException {
+        loadDocuments(documents, includedLanguages, 30*M);
+        documents.mixDocuments(dictionary, 1.0);
 
-        System.out.print(word + ":   ");
-        for (String key : map.keySet()) {
-            System.out.print(key + " ");
+        loadSentenceAlignedCorpus(documents, 20*M);
+
+        Collections.shuffle(documents.getDocuments());
+    }
+
+    public static void printMostSimilarWords(VectorSpace space, String word1, String word2, String word3) {
+        int mostSimilarCount = 10;
+        Iterator<Map.Entry<String, Double>> iterator1 = MyUtils.sortByValueDescending(space.getMostSimilarWords(word1, mostSimilarCount)).entrySet().iterator();
+        Iterator<Map.Entry<String, Double>> iterator2 = MyUtils.sortByValueDescending(space.getMostSimilarWords(word2, mostSimilarCount)).entrySet().iterator();
+        Iterator<Map.Entry<String, Double>> iterator3 = MyUtils.sortByValueDescending(space.getMostSimilarWords(word3, mostSimilarCount)).entrySet().iterator();
+
+        System.out.println(word1 + " | | " + word2 + " | | " + word3 + " | | ");
+        System.out.println("--- | --- | --- | --- | --- | ---");
+        System.out.println("Slovo | Podobnost | Slovo | Podobnost | Slovo | Podobnost");
+        System.out.println("--- | --- | --- | --- | --- | ---");
+
+        while (iterator1.hasNext()) {
+            Map.Entry<String, Double> entry1 = iterator1.next();
+            Map.Entry<String, Double> entry2 = iterator2.next();
+            Map.Entry<String, Double> entry3 = iterator3.next();
+            System.out.println(entry1.getKey() + " | " + entry1.getValue() +
+                    " | " + entry2.getKey() + " | " + entry2.getValue() +
+                    " | " + entry3.getKey() + " | " + entry3.getValue());
         }
-        System.out.println();
-        System.out.println();
     }
 }

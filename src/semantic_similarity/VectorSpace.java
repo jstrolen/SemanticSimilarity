@@ -3,6 +3,7 @@ package semantic_similarity;
 import semantic_similarity.techniques.word2vec.Word2vec;
 import semantic_similarity.utils.MyUtils;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,20 @@ public class VectorSpace {
 
     public Map<String, Double> getMostSimilarWords(ELanguage language, String word, int count) {
         return getMostSimilarWords(language.toString() + ":" + word, count);
+    }
+
+    public void normalize() {
+        for (Map.Entry<String, float[]> pair : words.entrySet()) {
+            //mean mormalization
+            float sum = 0;
+            for (float f : pair.getValue()) {
+                sum += f;
+            }
+            sum /= pair.getValue().length;
+            for (int i = 0; i < pair.getValue().length; i++) {
+                pair.getValue()[i] -= sum;
+            }
+        }
     }
 
     public Map<String, Double> getMostSimilarWords(String word, int count) {
@@ -118,5 +133,49 @@ public class VectorSpace {
         }
 
         return -1;
+    }
+
+    public void dump(String path) {
+        try {
+            BufferedWriter bw_word = new BufferedWriter(new FileWriter(new File(path + ".word.txt")));
+            BufferedWriter bw_vec = new BufferedWriter(new FileWriter(new File(path + ".vec.txt")));
+            for (Map.Entry<String, float[]> pair : words.entrySet()) {
+                bw_word.write(pair.getKey());
+                bw_word.newLine();
+
+                for (int i = 0; i < pair.getValue().length; i++) {
+                    bw_vec.write(pair.getValue()[i] + " ");
+                }
+                bw_vec.newLine();
+            }
+            bw_word.close();
+            bw_vec.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static VectorSpace fromDump(String path) {
+        VectorSpace vc = new VectorSpace();
+        try {
+            BufferedReader br_word = new BufferedReader(new FileReader(new File(path + ".word.txt")));
+            BufferedReader br_vec = new BufferedReader(new FileReader(new File(path + ".vec.txt")));
+            String line_word;
+            while ((line_word = br_word.readLine()) != null) {
+                String[] vectorWord = br_vec.readLine().split(" ");
+                float[] vector = new float[vectorWord.length];
+                for (int i = 0; i < vectorWord.length; i++) {
+                    vector[i] = Float.parseFloat(vectorWord[i]);
+                }
+
+                vc.addWord(line_word, vector);
+            }
+            br_word.close();
+            br_vec.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return vc;
     }
 }

@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static semantic_similarity.Settings.DEFAULT_SIMILARITY;
+import static semantic_similarity.Settings.SKIP_PHRASES;
+import static semantic_similarity.Settings.TRY_OTHER_LANGUAGES;
+import static semantic_similarity.utils.MyUtils.three;
 
 /**
  * @author Josef Stroleny
@@ -44,22 +47,59 @@ public class TestHolder {
         }
     }
 
-    public void testAll(VectorSpace space, boolean skipOOV) {
+    public void testAll(VectorSpace space) {
+        List<Double> result1 = new ArrayList<>();
+        List<Double> result2 = new ArrayList<>();
+
         for (Test test : tests) {
-            test(test, space, skipOOV);
+            result1.add(test(test, space, true));
+            result2.add(test(test, space, false));
         }
+        double mean1 = 0;
+        double mean2 = 0;
+        for (int i = 0; i < result1.size(); i++) {
+            mean1 += result1.get(i);
+            mean2 += result2.get(i);
+        }
+        mean1 /= result1.size();
+        mean2 /= result2.size();
+
+        for (int i = 0; i < tests.size(); i++) {
+            Test test = tests.get(i);
+            System.out.print(test.getLanguage1().toString() + "-" + test.getLanguage2().toString() +
+                    "_" + test.getName().substring(0, test.getName().length() - 4) + ": ");
+
+            System.out.println(three.format(result1.get(i)) + " (" + three.format(result2.get(i)) + ") ");
+        }
+        System.out.println("Prumer: " + three.format(mean1) + " (" + three.format(mean2) + ") ");
     }
 
-    private void test(Test test, VectorSpace space, boolean skipOOV) {
+    private double test(Test test, VectorSpace space, boolean skipOOV) {
         List<Double> similarities1 = new ArrayList<>();
         List<Double> similarities2 = new ArrayList<>();
 
         for (Test.WordPair wp: test.getWords()) {
+            if (SKIP_PHRASES && (wp.word1.contains("_") || wp.word2.contains("_"))) continue;
+
             float[] vector1 = space.getVector(wp.word1);
             float[] vector2 = space.getVector(wp.word2);
-            if (vector1 == null || vector2 == null) {
-                if (skipOOV) continue;
 
+            if ((vector1 == null || vector2 == null) && skipOOV) continue;
+
+            if (vector1 == null && TRY_OTHER_LANGUAGES) {
+                for (int i = 0; i < 5; i++) {
+                    vector1 = getOtherLanguage(wp.word1, i, space);
+                    if (vector1 != null) break;
+                }
+            }
+            if (vector2 == null && TRY_OTHER_LANGUAGES) {
+                for (int i = 0; i < 5; i++) {
+                    vector2 = getOtherLanguage(wp.word2, i, space);
+                    if (vector2 != null) break;
+                }
+            }
+
+            if (vector1 == null || vector2 == null) {
                 similarities2.add(DEFAULT_SIMILARITY);
             }
             else {
@@ -69,10 +109,37 @@ public class TestHolder {
             similarities1.add(wp.score);
         }
 
-        double pearson = getPearson(similarities1, similarities2);
-        System.out.println(test.getLanguage1().toString() + "-" + test.getLanguage2().toString() +
-                "_" + test.getName().substring(0, test.getName().length() - 4) + ": " +
-                "r=" + pearson);
+        return getPearson(similarities1, similarities2);
+    }
+
+    private float[] getOtherLanguage(String originalWord, int languageOrder, VectorSpace space) {
+        ELanguage language;
+        switch (languageOrder) {
+            case 0: {
+                language = ELanguage.ENGLISH;
+                break;
+            }
+            case 1: {
+                language = ELanguage.GERMAN;
+                break;
+            }
+            case 2: {
+                language = ELanguage.SPANISH;
+                break;
+            }
+            case 3: {
+                language = ELanguage.CZECH;
+                break;
+            }
+            case 4: {
+                language = ELanguage.CHINESE;
+                break;
+            }
+            default: language =  ELanguage.ENGLISH;
+        }
+
+        String newWord = language.toString() + ":" + originalWord.substring(3);
+        return space.getVector(newWord);
     }
 
     private double getPearson(List<Double> similarities1, List<Double> similarities2) {

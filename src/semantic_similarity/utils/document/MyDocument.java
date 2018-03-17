@@ -1,5 +1,6 @@
 package semantic_similarity.utils.document;
 
+import semantic_similarity.utils.MyUtils;
 import semantic_similarity.utils.parser.IParser;
 import semantic_similarity.utils.vocabulary.MyVocabulary;
 import semantic_similarity.ELanguage;
@@ -7,6 +8,10 @@ import semantic_similarity.ELanguage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+
+import static semantic_similarity.Settings.MAX_SENTENCE_RATIO;
+import static semantic_similarity.Settings.SENTENCE_MAX_LENGTH;
+import static semantic_similarity.Settings.SENTENCE_MIN_LENGTH;
 
 /**
  * @author Josef Stroleny
@@ -21,12 +26,45 @@ public class MyDocument {
         this.multilingual = false;
     }
 
-    public MyDocument(ELanguage language1, IParser parser1, String text1,
+    public static MyDocument create(ELanguage language1, IParser parser1, String text1,
                       ELanguage language2, IParser parser2, String text2,
                       MyVocabulary vocabulary) {
-        this.tokens = parser1.parse(language1, text1, vocabulary, null);
-        this.tokens = parser2.parse(language2, text2, vocabulary, tokens);
-        this.multilingual = (! language1.equals(language2));
+        int[] tokens1 = parser1.parse(language1, text1, vocabulary, null);
+        int[] tokens2 = parser2.parse(language2, text2, vocabulary, null);
+
+        int longer[] = tokens1;
+        int shorter[] = tokens2;
+        if (tokens2.length > tokens1.length) {
+            longer = tokens2;
+            shorter = tokens1;
+        }
+
+        double ratio = (double) longer.length / shorter.length;
+        if (shorter.length < SENTENCE_MIN_LENGTH || ratio > MAX_SENTENCE_RATIO || longer.length > SENTENCE_MAX_LENGTH) {
+            for (int i : longer) vocabulary.remove(i);
+            for (int i : shorter) vocabulary.remove(i);
+
+            return null;
+        }
+
+        //propleteme vety
+        int[] mergedArray = new int[longer.length + shorter.length];
+        double sum = 0;
+        int indexLonger = 0;
+        int indexShorter = 0;
+        while (indexLonger + indexShorter < longer.length + shorter.length) {
+            if ((sum < ratio) && (indexLonger < longer.length)) {
+                mergedArray[indexLonger + indexShorter] = longer[indexLonger];
+                indexLonger++;
+                sum += 1;
+            } else {
+                mergedArray[indexLonger + indexShorter] = shorter[indexShorter];
+                indexShorter++;
+                sum -= ratio;
+            }
+        }
+
+        return new MyDocument(mergedArray, vocabulary);
     }
 
     public MyDocument(int[] tokens, MyVocabulary vocabulary) {

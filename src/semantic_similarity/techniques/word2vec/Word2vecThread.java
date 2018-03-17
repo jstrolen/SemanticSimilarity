@@ -70,7 +70,7 @@ public class Word2vecThread implements Runnable {
         }
 
         for (int contextIndex = startIndex; contextIndex <= endIndex; contextIndex++) {
-            if (contextIndex == 0 || skipSet.contains(contextIndex)) continue;
+            if (contextIndex == wordIndex || skipSet.contains(contextIndex)) continue;
             int context = document.getTokenAt(contextIndex);
             if (context == -1) continue;
 
@@ -127,7 +127,7 @@ public class Word2vecThread implements Runnable {
         float[] contextMean = new float[word2vec.inputMatrix[0].length];
         int contextSize = 0;
         for (int contextIndex = startIndex; contextIndex <= endIndex; contextIndex++) {
-            if (contextIndex == 0 || skipSet.contains(contextIndex)) continue;
+            if (contextIndex == wordIndex || skipSet.contains(contextIndex)) continue;
             int context = document.getTokenAt(contextIndex);
             if (context == -1) continue;
 

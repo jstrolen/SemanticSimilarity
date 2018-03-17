@@ -17,7 +17,7 @@ public class MUSE {
     /**
      * Postup pro MUSE
      */
-    public static void MUSE() {
+    public MUSE() {
         //
         //rucne domapovat cinstinu do eng prostoru
 

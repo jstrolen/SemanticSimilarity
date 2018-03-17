@@ -6,6 +6,7 @@ package semantic_similarity;
 public class Settings {
     public static final int CORES = Runtime.getRuntime().availableProcessors();
     public static final double EPSILON = 0.00000001;
+    public static final int M = 1000000;
 
     //Paths
     public static final String CORPUS_PATH = "./res/corpus/";
@@ -28,6 +29,10 @@ public class Settings {
     //  - vocabulary reduction
     public static final int MIN_OCCURRENCE = 5;
 
+    //dictionary
+    public static final boolean UNIQUE_ONLY = false;
+    public static final boolean CROSSLINGUAL_MAPPING = false;
+
 
     //Word2vec
     /** Velikost skryte vrstvy */
@@ -41,5 +46,15 @@ public class Settings {
     public static final boolean USE_CBOW = true;
 
     //Testing
+    public static final boolean SKIP_PHRASES = false;
+    public static final boolean TRY_OTHER_LANGUAGES = false;
     public static final double DEFAULT_SIMILARITY = 0.5;
+
+    //Random - Translation
+    public static final double TRANSLATION_PROBABILITY = 0.5;
+
+    //Sentence-aligned corpus
+    public static final double MAX_SENTENCE_RATIO = 1.5;
+    public static final int SENTENCE_MIN_LENGTH = 7;
+    public static final int SENTENCE_MAX_LENGTH = Integer.MAX_VALUE;
 }

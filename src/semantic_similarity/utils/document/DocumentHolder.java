@@ -3,13 +3,16 @@ package semantic_similarity.utils.document;
 import semantic_similarity.Settings;
 import semantic_similarity.utils.dictionary.MyDictionary;
 import semantic_similarity.utils.parser.IParser;
+import semantic_similarity.utils.parser.PlaintextParser;
 import semantic_similarity.utils.vocabulary.MyVocabulary;
 import semantic_similarity.ELanguage;
 
 import java.io.*;
 import java.util.*;
 
+import static semantic_similarity.Settings.CORPUS_PATH;
 import static semantic_similarity.Settings.MIN_OCCURRENCE;
+import static semantic_similarity.Settings.TRANSLATION_PROBABILITY;
 
 /**
  * @author Josef Stroleny
@@ -33,12 +36,14 @@ public class DocumentHolder {
     }
 
     public void addDocument(ELanguage language, IParser parser, String text) {
-        this.documents.add(new MyDocument(language, parser, text, vocabulary));
+        MyDocument document = new MyDocument(language, parser, text, vocabulary);
+        if (document != null) this.documents.add(document);
     }
 
     public void addDocument(ELanguage language1, IParser parser1, String text1,
                             ELanguage language2, IParser parser2, String text2) {
-        this.documents.add(new MyDocument(language1, parser1, text1, language2, parser2, text2, vocabulary));
+        MyDocument document = MyDocument.create(language1, parser1, text1, language2, parser2, text2, vocabulary);
+        if (document != null) this.documents.add(document);
     }
 
     public void reduceVocabulary() {
@@ -85,12 +90,17 @@ public class DocumentHolder {
         System.gc();
     }
 
-    public void mixDocuments(MyDictionary dictionary, double probability) {
-        Collections.shuffle(this.documents);
+    public void mixDocuments(MyDictionary dictionary, double maxDocumentsRatio) {
+        int documents = (int) (this.documents.size() * maxDocumentsRatio);
+        mixDocuments(dictionary, documents);
+    }
+
+    public void mixDocuments(MyDictionary dictionary, int maxDocuments) {
+        Collections.shuffle(documents);
         for (MyDocument doc : documents) {
-            for (int i = 0; i <  doc.getDocumentSize(); i++) {
+            for (int i = 0; i <  doc.getDocumentSize() && i < maxDocuments; i++) {
                 String word = vocabulary.getWord(doc.getTokenAt(i));
-                if (dictionary.contains(word) && Math.random() < probability) {
+                if (dictionary.contains(word) && Math.random() < TRANSLATION_PROBABILITY) {
                     int wordID = vocabulary.add(dictionary.getRandom(word));
                     doc.getTokens()[i] = wordID;
                     vocabulary.remove(word);
@@ -151,6 +161,24 @@ public class DocumentHolder {
 
             return new DocumentHolder(vocab, documents);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static DocumentHolder loadPlainText(String path) {
+        try {
+            DocumentHolder documents = new DocumentHolder();
+            IParser parser = new PlaintextParser();
+            BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+            String line;
+            while ((line = br.readLine()) != null) {
+                documents.addDocument(null, parser, line);
+            }
+            br.close();
+
+            return documents;
         } catch (Exception e) {
             e.printStackTrace();
         }
