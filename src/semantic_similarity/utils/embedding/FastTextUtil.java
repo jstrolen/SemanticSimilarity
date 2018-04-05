@@ -23,8 +23,11 @@ public class FastTextUtil implements IEmbeddingUtil {
             int wordCount = Math.min(Integer.parseInt(header[0]), maxCount);
             int vectorDimension = Integer.parseInt(header[1]);
 
-            for (int i = 0; i < wordCount; i++) {
-                String[] string = br.readLine().split(" ");
+            int count = 0;
+            String line;
+            while ((line = br.readLine()) != null && count < maxCount) {
+                String[] string = line.split(" ");
+                if (string.length < 2) continue;
 
                 String word = string[0];
                 float[] vector = new float[vectorDimension];
@@ -33,6 +36,7 @@ public class FastTextUtil implements IEmbeddingUtil {
                 }
 
                 VectorSpace.addWord(language, word, vector);
+                count++;
             }
 
             return VectorSpace;

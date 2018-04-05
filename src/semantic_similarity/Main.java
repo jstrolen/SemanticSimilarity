@@ -1,16 +1,21 @@
 package semantic_similarity;
 
+import semantic_similarity.techniques.collocation.Collocation;
+import semantic_similarity.techniques.monolingual_mapping.MultilingualCCA;
 import semantic_similarity.utils.MyUtils;
 import semantic_similarity.utils.dictionary.MyDictionary;
 import semantic_similarity.utils.document.DocumentHolder;
 import semantic_similarity.utils.embedding.*;
+import semantic_similarity.utils.parser.IParser;
+import semantic_similarity.utils.parser.PlaintextParser;
 import semantic_similarity.utils.testing.TestHolder;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import static semantic_similarity.Settings.*;
 import static semantic_similarity.utils.MyUtils.mergeVectorSpaces;
+import static semantic_similarity.utils.MyUtils.random;
 import static semantic_similarity.utils.document.DocumentUtils.loadDocuments;
 import static semantic_similarity.utils.document.DocumentUtils.loadSentenceAlignedCorpus;
 
@@ -20,15 +25,11 @@ import static semantic_similarity.utils.document.DocumentUtils.loadSentenceAlign
 public class Main {
     public static void main(String[] args) {
         try {
-            List<ELanguage> includedLanguages = new ArrayList<>();
-            includedLanguages.add(ELanguage.ENGLISH); includedLanguages.add(ELanguage.GERMAN); includedLanguages.add(ELanguage.SPANISH);
-
             TestHolder test = new TestHolder();
             test.load(TESTING_PATH);
 
-            MyDictionary dictionary = new MyDictionary();
-            dictionary.load(VOCABULARY_PATH, includedLanguages);
-
+            /*MyDictionary dictionary = new MyDictionary();
+            dictionary.load(VOCABULARY_PATH);*/
 
             /*
             DocumentHolder documents = new DocumentHolder();
@@ -37,12 +38,11 @@ public class Main {
             */
 
             //Zkouska uspesnosti
-            //VectorSpace multilingual = new FastTextMultilingualUtil().loadSpace(Settings.EMBEDDING_PATH + "50M_combined_300_5e_sg_6-9_30M+20M.vec", Integer.MAX_VALUE);
-            VectorSpace multilingual = VectorSpace.fromDump(TEMP_PATH + "cca+(dictionary+sentence)_dump");
-            test.testAll(multilingual);
+            VectorSpace multilingual = new MyEmbeddingUtil().loadSpace(EMBEDDING_PATH + "fasttext-300k_multilingual.txt", Integer.MAX_VALUE);
             System.out.println(multilingual.getSize());
-
-            printMostSimilarWords(multilingual, "en:money", "en:shark", "en:castle");
+            //printMostSimilarWords(multilingual, "cs:peníze", "en:shark", "cs:hrad");
+            test.testAll(multilingual);
+            //interactive(multilingual);
 
 
             /*List<VectorSpace> vs = new ArrayList<>();
@@ -52,6 +52,45 @@ public class Main {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void work(VectorSpace multilingual, String language) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(new File(EMBEDDING_PATH + "fasttext-uni_" + language + ".txt")));
+        bw.write("0 300");
+        bw.newLine();
+
+        BufferedReader br = new BufferedReader(new FileReader(new File(EMBEDDING_PATH + "fasttext_" + language + ".txt")));
+        br.readLine();
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] split = line.split(" ");
+            if (split.length < 1) continue;
+
+            if (multilingual.getVector(language + ":" + split[0]) != null) {
+                bw.write(line);
+                bw.newLine();
+            }
+        }
+        bw.flush();
+    }
+
+    private static void interactive(VectorSpace space) {
+        System.out.println("ready: ");
+        Scanner sc = new Scanner(System.in);
+        String line;
+        while ((line = sc.nextLine()) != null) {
+            List<String> list = Arrays.asList(line.split(" "));
+
+            Map<String, Double> map = space.getMostSimilarWords(list, 10);
+            if (map == null || map.isEmpty()) continue;
+            Iterator<Map.Entry<String, Double>> iterator1 = MyUtils.sortByValueDescending(map).entrySet().iterator();
+            while (iterator1.hasNext()) {
+                Map.Entry<String, Double> entry1 = iterator1.next();
+                System.out.println(entry1.getKey() + " : " + entry1.getValue());
+            }
+            System.out.println();
+
         }
     }
 

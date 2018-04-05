@@ -3,9 +3,8 @@ package semantic_similarity.utils.embedding;
 import semantic_similarity.ELanguage;
 import semantic_similarity.VectorSpace;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.util.Map;
 
 /**
  * @author Josef Stroleny
@@ -44,6 +43,25 @@ public class FastTextMultilingualUtil implements IEmbeddingUtil {
 
     @Override
     public void saveSpace(String path, VectorSpace vectorSpace) {
-        //not used
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(new File(path)));
+
+            bw.write(vectorSpace.getSize() + " " + vectorSpace.getDimension());
+            bw.newLine();
+
+            for (Map.Entry<String, float[]> vector : vectorSpace.getVectorSpace().entrySet()) {
+                bw.write(vector.getKey());
+
+                for(float f : vector.getValue()) {
+                    bw.write(" " + String.valueOf(f));
+                }
+
+                bw.newLine();
+            }
+
+            bw.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -23,7 +23,7 @@ public class MyDictionary {
         this.dictionaryTable = new HashMap<>();
     }
 
-    public void load(String folder, List<ELanguage> includedLanguages) {
+    public void load(String folder) {
         try {
             File file = new File(folder);
             for (final File fileEntry : file.listFiles()) {
@@ -37,10 +37,6 @@ public class MyDictionary {
                     String languages = fileEntry.getName().split("_")[1];
                     ELanguage language1 = ELanguage.fromString(languages.substring(0, 2));
                     ELanguage language2 = ELanguage.fromString(languages.substring(3, 5));
-
-                    if ((includedLanguages != null) && (!includedLanguages.contains(language1) || !includedLanguages.contains(language2))) {
-                        continue;
-                    }
 
                     BufferedReader br = new BufferedReader(new FileReader(fileEntry));
                     String line;

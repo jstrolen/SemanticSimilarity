@@ -109,11 +109,19 @@ public class MyDocument {
     }
 
     public void savePlainText(BufferedWriter bw, MyVocabulary vocabulary, boolean skipNull) throws IOException {
+        boolean first = true;
+
         for (int i = 0; i < tokens.length; i++) {
             String word = vocabulary.getWord(tokens[i]);
             if (skipNull && word == null) continue;
 
-            bw.write(word + " ");
+            if (first) {
+                bw.write(word);
+                first = false;
+            }
+             else {
+                bw.write(" " + word);
+            }
         }
 
         bw.newLine();

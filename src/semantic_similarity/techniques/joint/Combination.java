@@ -25,7 +25,7 @@ public class Combination {
 
         //Nacteni slovniku
         MyDictionary dictionary = new MyDictionary();
-        dictionary.load(VOCABULARY_PATH, includedLanguages);
+        dictionary.load(VOCABULARY_PATH);
 
         //Vytvoreni korpusu
         DocumentHolder documents = new DocumentHolder();

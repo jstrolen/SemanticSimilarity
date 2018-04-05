@@ -41,17 +41,20 @@ public class Test {
         String line;
         while ((line = br.readLine()) != null) {
             String[] splitLine = line.split("\\t");
-            if (splitLine.length != 3) {
+            if (splitLine.length == 3) {
+                String word1 = language1.toString() + ":" + splitLine[0].replaceAll(" ", "_").toLowerCase();
+                String word2 = language2.toString() + ":" + splitLine[1].replaceAll(" ", "_").toLowerCase();
+                double score = Double.parseDouble(splitLine[2]);
+                test.putWord(word1, word2, score);
+            } else {
                 splitLine = line.split(" ");
-                if (splitLine.length != 3) {
-                    continue;
+                if (splitLine.length == 3) {
+                    String word1 = language1.toString() + ":" + splitLine[0].toLowerCase();
+                    String word2 = language2.toString() + ":" + splitLine[1].toLowerCase();
+                    double score = Double.parseDouble(splitLine[2]);
+                    test.putWord(word1, word2, score);
                 }
             }
-
-            String word1 = language1.toString() + ":" + splitLine[0].replaceAll(" ", "_").toLowerCase();
-            String word2 = language2.toString() + ":" + splitLine[1].replaceAll(" ", "_").toLowerCase();
-            double score = Double.parseDouble(splitLine[2]);
-            test.putWord(word1, word2, score);
         }
         br.close();
 

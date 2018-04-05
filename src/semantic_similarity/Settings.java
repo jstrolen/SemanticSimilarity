@@ -46,8 +46,8 @@ public class Settings {
     public static final boolean USE_CBOW = true;
 
     //Testing
-    public static final boolean SKIP_PHRASES = false;
-    public static final boolean TRY_OTHER_LANGUAGES = false;
+    public static final boolean TRY_OTHER_LANGUAGES = true;
+    public static final boolean TRY_BOW = true;
     public static final double DEFAULT_SIMILARITY = 0.5;
 
     //Random - Translation

@@ -74,12 +74,63 @@ public class VectorSpace {
         }
     }
 
+    public Map<String, Double> getMostSimilarWords(List<String> words, int count) {
+        if (words == null || words.isEmpty()) return null;
+
+        float[] hlpVector = null;
+        int index = 0;
+        boolean plus = true;
+        while (hlpVector == null && index < words.size()) {
+            String word = words.get(index++);
+
+            char first = word.charAt(0);
+            if (first == '-') {
+                word = word.substring(1);
+                plus = false;
+            } else {
+                plus = true;
+            }
+
+            hlpVector = getVector(word);
+        }
+        if (hlpVector == null) return null;
+        float[] resultVector = new float[hlpVector.length];
+        for (int i = 0; i < hlpVector.length; i++) {
+            if (plus) resultVector[i] += hlpVector[i];
+            else resultVector[i] -= hlpVector[i];
+        }
+
+        while (index < words.size()) {
+            String word = words.get(index++);
+
+            char first = word.charAt(0);
+            if (first == '-') {
+                word = word.substring(1);
+                plus = false;
+            } else {
+                plus = true;
+            }
+
+            hlpVector = getVector(word);
+            if (hlpVector != null) {
+                for (int i = 0; i < hlpVector.length; i++) {
+                    if (plus) resultVector[i] += hlpVector[i];
+                    else resultVector[i] -= hlpVector[i];
+                }
+            }
+        }
+
+        return getMostSimilarWords(resultVector, count);
+    }
+
     public Map<String, Double> getMostSimilarWords(String word, int count) {
+        return getMostSimilarWords(getVector(word), count);
+    }
+
+    public Map<String, Double> getMostSimilarWords(float[] wordVector, int count) {
         if (count >= words.size()) count = words.size() - 1;
         Map<String, Double> map = new HashMap<>();
-        float[] wordVector = getVector(word);
         if (wordVector == null) {
-            System.out.println(word + " is null");
             return null;
         }
 
