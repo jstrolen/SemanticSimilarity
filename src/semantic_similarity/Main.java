@@ -38,7 +38,8 @@ public class Main {
             */
 
             //Zkouska uspesnosti
-            VectorSpace multilingual = new MyEmbeddingUtil().loadSpace(EMBEDDING_PATH + "fasttext-300k_multilingual.txt", Integer.MAX_VALUE);
+            VectorSpace multilingual = new FastTextMultilingualUtil().loadSpace(EMBEDDING_PATH + "50M_combined_300_5e_sg_6-9_30M+20M.vec", Integer.MAX_VALUE);
+            //VectorSpace multilingual = VectorSpace.fromDump(TEMP_PATH + "cca+(dictionary+sentence)_dump");
             System.out.println(multilingual.getSize());
             //printMostSimilarWords(multilingual, "cs:peníze", "en:shark", "cs:hrad");
             test.testAll(multilingual);
